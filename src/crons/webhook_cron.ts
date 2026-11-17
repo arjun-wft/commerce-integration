@@ -66,14 +66,14 @@ export async function scheduleSyncWebhooks() {
     }
 }
 
-const syncJobs = cron.schedule('*/15 * * * *', scheduleIntitalSyncRunner, {      // Har 15 minutes m sync kro
+export const syncJobs = cron.schedule('*/15 * * * *', scheduleIntitalSyncRunner, {      // Har 15 minutes m sync kro
     name: "Schedule Inital Sync Runner",
     timezone: "Asia/Kolkata",
     distributed: true,
     noOverlap: true,
 })
 
-const syncWebhooks = cron.schedule("*/25 * * * *", scheduleSyncWebhooks, {    // Har 25 minutes m failed webhooks ko retry
+export const syncWebhooks = cron.schedule("*/25 * * * *", scheduleSyncWebhooks, {    // Har 25 minutes m failed webhooks ko retry
     name: "Schedule Webhooks Failed Sync",
     timezone: 'Asia/Kolkata',
     distributed: true,

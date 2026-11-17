@@ -1,0 +1,168 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-commerce_integration}
+      POSTGRES_USER: ${POSTGRES_USER:-commerce}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init-databases.sql:/docker-entrypoint-initdb.d/01-init-databases.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+    command:
+      - sh
+      - -c
+      - exec redis-server --appendonly yes --requirepass "$${REDIS_PASSWORD}"
+    ports:
+      - "127.0.0.1:${REDIS_PUBLISHED_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" ping | grep -q PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: .env
+    environment:
+      AIVEN_HOST: postgres
+      AIVEN_PORT: 5432
+      AIVEN_USER: ${POSTGRES_USER:-commerce}
+      AIVEN_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      AIVEN_DATABASE: ${POSTGRES_DB:-commerce_integration}
+      AIVEN_SSL: "false"
+      AIVEN_CA_PEM: ""
+    command: ["npm", "run", "db:migrate"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  integration-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: .env
+    environment:
+      PORT: 3000
+      AIVEN_HOST: postgres
+      AIVEN_PORT: 5432
+      AIVEN_USER: ${POSTGRES_USER:-commerce}
+      AIVEN_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      AIVEN_DATABASE: ${POSTGRES_DB:-commerce_integration}
+      AIVEN_SSL: "false"
+      AIVEN_CA_PEM: ""
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_USERNAME: default
+      MEDUSA_BASE_URL: ${MEDUSA_BASE_URL:-http://medusa:9000}
+      DIRECTUS_BASE_URL: ${DIRECTUS_BASE_URL:-http://directus:8055}
+    ports:
+      - "127.0.0.1:${PORT:-3000}:3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  cron:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: .env
+    environment:
+      AIVEN_HOST: postgres
+      AIVEN_PORT: 5432
+      AIVEN_USER: ${POSTGRES_USER:-commerce}
+      AIVEN_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      AIVEN_DATABASE: ${POSTGRES_DB:-commerce_integration}
+      AIVEN_SSL: "false"
+      AIVEN_CA_PEM: ""
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_USERNAME: default
+    command: ["npm", "run", "start:cron"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  directus:
+    image: directus/directus:11.14.0
+    profiles: ["cms"]
+    environment:
+      KEY: ${DIRECTUS_KEY:?Set DIRECTUS_KEY in .env}
+      SECRET: ${DIRECTUS_SECRET:?Set DIRECTUS_SECRET in .env}
+      DB_CLIENT: pg
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: directus
+      DB_USER: ${POSTGRES_USER:-commerce}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      ADMIN_EMAIL: ${DIRECTUS_ADMIN_EMAIL:-admin@example.com}
+      ADMIN_PASSWORD: ${DIRECTUS_ADMIN_PASSWORD:?Set DIRECTUS_ADMIN_PASSWORD in .env}
+      PUBLIC_URL: ${DIRECTUS_PUBLIC_URL:-http://localhost:8055}
+    ports:
+      - "127.0.0.1:${DIRECTUS_PORT:-8055}:8055"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - directus_uploads:/directus/uploads
+      - directus_extensions:/directus/extensions
+    restart: unless-stopped
+
+  medusa:
+    build:
+      context: ./my-medusa-store
+      dockerfile: Dockerfile
+    profiles: ["commerce"]
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: ${MEDUSA_DATABASE_URL:?Set MEDUSA_DATABASE_URL in .env}
+      DATABASE_SSL: "false"
+      REDIS_URL: ${MEDUSA_REDIS_URL:?Set MEDUSA_REDIS_URL in .env}
+      STORE_CORS: ${MEDUSA_STORE_CORS:-http://localhost:8000}
+      ADMIN_CORS: ${MEDUSA_ADMIN_CORS:-http://localhost:9000}
+      AUTH_CORS: ${MEDUSA_AUTH_CORS:-http://localhost:9000,http://localhost:8000}
+      JWT_SECRET: ${MEDUSA_JWT_SECRET:?Set MEDUSA_JWT_SECRET in .env}
+      COOKIE_SECRET: ${MEDUSA_COOKIE_SECRET:?Set MEDUSA_COOKIE_SECRET in .env}
+      MEDUSA_WEBHOOK_SECRET: ${MEDUSA_WEBHOOK_SECRET:?Set MEDUSA_WEBHOOK_SECRET in .env}
+      COMMERCE_INTEGRATION_WEBHOOK_URL: http://integration-api:3000/webhooks/medusa
+    command: ["npm", "run", "dev", "--workspace=@dtc/backend"]
+    ports:
+      - "127.0.0.1:${MEDUSA_PORT:-9000}:9000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      integration-api:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  directus_uploads:
+  directus_extensions:

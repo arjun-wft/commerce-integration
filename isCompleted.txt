@@ -1,0 +1,17 @@
+Requirement	                                                                                    Status
+
+Medusa + Directus integration	                                                                Done
+Product, variants, prices, stock synchronization	                                            Done
+Merged PostgreSQL model	                                                                        Done
+Initial sync + pagination	                                                                    Done
+Webhook verification + idempotency	                                                            Done
+BullMQ + Redis workers	                                                                        Done
+Failed webhook retry via cron	                                                                Done
+Admin sync interface	                                                                        Done
+Merged HTTP API	                                                                                Done
+Fixtures / mocks	                                                                            Done
+Docker setup	                                                                                Done
+Documentation	                                                                                Done
+Overall testing                                                                                 Done
+
+Typesense / Search	Optional / Pending

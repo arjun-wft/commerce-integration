@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#101722" />
+    <title>Commerce Console</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Commerce Console home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none">
+              <path d="M16 3 28 9.5v13L16 29 4 22.5v-13L16 3Z" fill="currentColor" />
+              <path d="m10 16 4 4 8-9" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </span>
+          <span class="brand-copy">
+            <strong>Commerce</strong>
+            <span>INTEGRATION CONSOLE</span>
+          </span>
+        </a>
+
+        <div class="topbar-right">
+          <span class="connection-indicator" id="connection-indicator">
+            <span class="connection-dot"></span>
+            <span id="connection-label">Connecting</span>
+          </span>
+          <span class="topbar-divider"></span>
+          <span class="updated-label" id="last-updated">Not synced yet</span>
+          <button class="icon-button" id="refresh-button" type="button" aria-label="Refresh dashboard" title="Refresh dashboard">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path d="M16.2 8A6.5 6.5 0 0 0 4.7 5.3L3.5 6.5M3.8 12A6.5 6.5 0 0 0 15.3 14.7l1.2-1.2M3.5 3.5v3h3m10 10v-3h-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <main class="main-content">
+        <section class="welcome-row">
+          <div>
+            <p class="eyebrow">YOUR STORE AT A GLANCE</p>
+            <h1>Commerce overview</h1>
+            <p class="welcome-copy">Products, content health, and webhook activity in one place.</p>
+          </div>
+          <div class="welcome-actions">
+            <button class="button button-sync" id="sync-button" type="button">
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M16.2 8A6.5 6.5 0 0 0 4.7 5.3L3.5 6.5M3.8 12A6.5 6.5 0 0 0 15.3 14.7l1.2-1.2M3.5 3.5v3h3m10 10v-3h-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <span id="sync-button-label">Sync all</span>
+            </button>
+            <button class="button button-secondary" id="settings-toggle" type="button" aria-expanded="false">
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" stroke="currentColor" stroke-width="1.5" />
+                <path d="m16.1 11.6 1.1.9-1.5 2.6-1.3-.6a6.7 6.7 0 0 1-1.6.9l-.2 1.4h-3l-.2-1.4a6.7 6.7 0 0 1-1.6-.9l-1.3.6L5 12.5l1.1-.9a5.9 5.9 0 0 1 0-1.8L5 8.9l1.5-2.6 1.3.6a6.7 6.7 0 0 1 1.6-.9l.2-1.4h3l.2 1.4a6.7 6.7 0 0 1 1.6.9l1.3-.6 1.5 2.6-1.1.9a5.9 5.9 0 0 1 0 1.8Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" />
+              </svg>
+              API settings
+            </button>
+          </div>
+        </section>
+
+        <section class="sync-summary-panel" id="sync-summary-panel" aria-live="polite" hidden>
+          <div class="sync-summary-heading">
+            <div>
+              <p class="eyebrow">INITIAL DATA SYNC</p>
+              <h2 id="sync-summary-title">Sync in progress</h2>
+              <p id="sync-summary-message">Fetching products and content. This may take a little while.</p>
+            </div>
+            <button class="icon-button" id="sync-summary-dismiss" type="button" aria-label="Dismiss sync summary">×</button>
+          </div>
+          <div class="sync-summary-grid" id="sync-summary-grid"></div>
+        </section>
+
+        <section class="settings-panel" id="settings-panel" hidden>
+          <div>
+            <h2>Connect your API</h2>
+            <p>Use the base URL for the existing Express API, including <code>/api</code>.</p>
+          </div>
+          <form id="api-settings-form" class="api-form">
+            <label class="sr-only" for="api-base-url">API base URL</label>
+            <input id="api-base-url" name="apiBaseUrl" type="url" autocomplete="url" placeholder="http://localhost:3000/api" />
+            <button class="button button-primary" type="submit">Save &amp; connect</button>
+          </form>
+          <p class="settings-hint">If the dashboard is hosted on another origin, that host needs a same-origin proxy or browser CORS permission.</p>
+        </section>
+
+        <section class="stats-grid" aria-label="Store summary">
+          <article class="stat-card">
+            <div class="stat-top"><span class="stat-icon icon-blue"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m10 2.5 7 4v7l-7 4-7-4v-7l7-4Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" /><path d="m3.3 6.7 6.7 4 6.7-4M10 10.7v6.5" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" /></svg></span><span class="stat-caption">PRODUCT CATALOG</span></div>
+            <strong class="stat-value" id="stat-products">—</strong>
+            <span class="stat-note">Products in your integration</span>
+          </article>
+          <article class="stat-card">
+            <div class="stat-top"><span class="stat-icon icon-green"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m4 10.2 4 4 8-8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg></span><span class="stat-caption">CONTENT READY</span></div>
+            <strong class="stat-value" id="stat-ready">—</strong>
+            <span class="stat-note">Products with linked content</span>
+          </article>
+          <article class="stat-card">
+            <div class="stat-top"><span class="stat-icon icon-amber"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 3 18 17H2L10 3Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" /><path d="M10 8v4m0 2.5v.1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /></svg></span><span class="stat-caption">NEEDS ATTENTION</span></div>
+            <strong class="stat-value" id="stat-attention">—</strong>
+            <span class="stat-note">Products missing content</span>
+          </article>
+          <article class="stat-card">
+            <div class="stat-top"><span class="stat-icon icon-violet"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 3v7l4 2.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg></span><span class="stat-caption">WEBHOOKS · 24H</span></div>
+            <strong class="stat-value" id="stat-webhooks">—</strong>
+            <span class="stat-note">Events received in the last day</span>
+          </article>
+        </section>
+
+        <section class="workspace-card">
+          <div class="tab-bar" role="tablist" aria-label="Dashboard sections">
+            <button class="tab-button is-active" id="products-tab" type="button" role="tab" aria-selected="true" aria-controls="products-panel">
+              Products <span class="tab-count" id="products-tab-count">—</span>
+            </button>
+            <button class="tab-button" id="webhooks-tab" type="button" role="tab" aria-selected="false" aria-controls="webhooks-panel">
+              Webhook activity <span class="tab-count" id="webhooks-tab-count">—</span>
+            </button>
+          </div>
+
+          <section class="tab-panel" id="products-panel" role="tabpanel" aria-labelledby="products-tab">
+            <div class="section-heading">
+              <div>
+                <h2>Product catalog</h2>
+                <p>Explore synced products and their content status.</p>
+              </div>
+              <div class="table-controls">
+                <label class="search-control">
+                  <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="8.8" cy="8.8" r="5.8" stroke="currentColor" stroke-width="1.5" /><path d="m13.2 13.2 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" /></svg>
+                  <input id="product-search" type="search" placeholder="Search products..." autocomplete="off" />
+                </label>
+                <label class="select-control">
+                  <span class="sr-only">Filter by content status</span>
+                  <select id="content-status-filter">
+                    <option value="">All content statuses</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+            <div class="notice" id="dashboard-notice" role="status" hidden></div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th scope="col">PRODUCT</th>
+                    <th scope="col">CONTENT STATUS</th>
+                    <th scope="col">COMMERCE ID</th>
+                    <th scope="col">CMS CONTENT ID</th>
+                    <th scope="col">LAST SYNCED</th>
+                    <th scope="col"><span class="sr-only">Actions</span></th>
+                  </tr>
+                </thead>
+                <tbody id="products-table-body">
+                  <tr><td class="table-message" colspan="6">Connecting to your API…</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="table-footer">
+              <span id="products-result-count">Loading products…</span>
+              <span class="footer-hint">Select a product to view details and variants</span>
+            </div>
+          </section>
+
+          <section class="tab-panel" id="webhooks-panel" role="tabpanel" aria-labelledby="webhooks-tab" hidden>
+            <div class="section-heading">
+              <div>
+                <h2>Webhook activity</h2>
+                <p>Recent events, ordered by their latest received or processed time.</p>
+              </div>
+              <div class="table-controls">
+                <label class="search-control">
+                  <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="8.8" cy="8.8" r="5.8" stroke="currentColor" stroke-width="1.5" /><path d="m13.2 13.2 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" /></svg>
+                  <input id="webhook-search" type="search" placeholder="Search events..." autocomplete="off" />
+                </label>
+                <label class="select-control">
+                  <span class="sr-only">Filter webhooks by status</span>
+                  <select id="webhook-status-filter"><option value="">All event statuses</option></select>
+                </label>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table webhook-table">
+                <thead>
+                  <tr>
+                    <th scope="col">EVENT</th>
+                    <th scope="col">SOURCE</th>
+                    <th scope="col">STATUS</th>
+                    <th scope="col">RECEIVED</th>
+                    <th scope="col">PROCESSED</th>
+                    <th scope="col">LATEST ACTIVITY</th>
+                  </tr>
+                </thead>
+                <tbody id="webhooks-table-body">
+                  <tr><td class="table-message" colspan="6">Loading webhook activity…</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="table-footer">
+              <span id="webhooks-result-count">Loading events…</span>
+              <span class="footer-hint">Newest activity appears first</span>
+            </div>
+          </section>
+        </section>
+
+        <footer class="page-footer">
+          <span>Commerce Integration Console</span>
+          <span>Read-only dashboard · Existing API</span>
+        </footer>
+      </main>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,46 @@
+{
+  "name": "commerce-integration",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc --ignoreConfig --outDir dist --rootDir . --types node --module NodeNext --target ESNext --strict --skipLibCheck src/app.ts src/crons/webhook_cron.ts",
+    "start": "node dist/src/app.js",
+    "start:cron": "node dist/src/crons/webhook_cron.js",
+    "test": "vitest run src/modules/products/products.repository.test.ts src/modules/variants/variants.repository.test.ts",
+    "test:watch": "vitest",
+    "test:integration": "vitest run src/modules/products/products.repository.integration.test.ts src/modules/products/products.service.integration.test.ts src/modules/variants/variants.repository.integration.test.ts src/modules/webhooks/webhooks.repository.integration.test.ts src/modules/webhooks/webhooks.service.integration.test.ts",
+    "test:medusa-api": "vitest run src/config/medusa.integration.test.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@node-cron/redis-coordinator": "^0.1.0",
+    "@types/express": "^5.0.6",
+    "@types/ioredis": "^4.28.10",
+    "@types/pg": "^8.23.1",
+    "@types/pg-cursor": "^2.7.2",
+    "bullmq": "^6.7.2",
+    "cors": "^2.8.6",
+    "directus": "^12.6.1",
+    "dotenv": "^18.0.9",
+    "drizzle-kit": "^0.31.11",
+    "drizzle-orm": "^0.45.4",
+    "express": "^5.3.0",
+    "i": "^0.3.7",
+    "ioredis": "^6.0.0",
+    "node-cron": "^4.6.0",
+    "npm": "^12.2.2",
+    "pg": "^8.23.1",
+    "pg-cursor": "^2.22.1",
+    "pino": "^10.4.0",
+    "pino-pretty": "^13.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
+  }
+}

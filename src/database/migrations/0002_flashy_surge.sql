@@ -1,0 +1,1 @@
+ALTER TABLE "merged_products" RENAME COLUMN "cmd_content_id" TO "cms_content_id";

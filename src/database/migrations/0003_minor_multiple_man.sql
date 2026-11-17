@@ -1,0 +1,1 @@
+ALTER TABLE "webhook_events" ALTER COLUMN "external_event_id" SET NOT NULL;
